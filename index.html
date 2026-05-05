@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Password Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Google Fonts for Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="icons/main.png">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Menu Bar -->
+        <nav class="menubar">
+            <div class="menu-item">
+                <span id="menuFile">File</span>
+                <div class="dropdown">
+                    <button id="actionNew">New</button>
+                    <button id="actionOpen">Open</button>
+                    <button id="actionSave">Save</button>
+                    <button id="actionSaveAs">Save As</button>
+                    <div id="recentFilesContainer" class="hidden">
+                        <hr class="dropdown-divider">
+                        <div id="recentFilesList"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="menu-item">
+                <span id="menuLanguage">Language</span>
+                <div class="dropdown">
+                    <button id="actionEnglish">English</button>
+                    <button id="actionChinese">Chinese</button>
+                </div>
+            </div>
+            <div class="menu-item" style="margin-left: auto;">
+                <span id="actionAbout">About</span>
+            </div>
+        </nav>
+
+        <!-- Toolbar -->
+        <div class="toolbar glass-panel">
+            <button id="toolbarNew" class="toolbar-btn" title="New"><img src="icons/new.png" alt="New"></button>
+            <button id="toolbarOpen" class="toolbar-btn" title="Open"><img src="icons/open.png" alt="Open"></button>
+            <button id="toolbarSave" class="toolbar-btn" title="Save"><img src="icons/save.png" alt="Save"></button>
+            <button id="toolbarSaveAs" class="toolbar-btn" title="Save As"><img src="icons/saveas.png" alt="Save As"></button>
+        </div>
+
+        <!-- Main Content Layout -->
+        <div class="main-layout">
+            <!-- Central Widget -->
+            <main class="central-widget glass-panel">
+                <h1 id="titleMainWindow" class="app-title">Account Password Manager</h1>
+                <div class="status-message" id="statusMessage">Ready</div>
+
+                <div class="form-grid">
+                    <label for="magicNumber" id="labelMagicNumber">Magic Number:</label>
+                    <input type="password" id="magicNumber" maxlength="24" placeholder="Enter secret key..." autocomplete="new-password">
+
+                    <label for="service" id="labelService">Service:</label>
+                    <input type="text" id="service" placeholder="e.g. GitHub" autocomplete="off">
+
+                    <label for="account" id="labelAccount">Account:</label>
+                    <input type="text" id="account" placeholder="Username or Email" autocomplete="off">
+
+                    <label for="password" id="labelPassword">Password:</label>
+                    <input type="text" id="password" placeholder="Password" autocomplete="off">
+                </div>
+
+                <div class="button-row">
+                    <button id="buttonAdd" class="btn primary" disabled>Add</button>
+                    <button id="buttonRemove" class="btn danger" disabled>Remove</button>
+                    <button id="buttonFind" class="btn secondary" disabled>Find</button>
+                    <button id="buttonClear" class="btn outline">Clear</button>
+                </div>
+            </main>
+
+            <!-- Sidebar -->
+            <aside class="sidebar glass-panel">
+                <h2 id="dockWidgetServices">List of Services</h2>
+                <ul id="listWidgetServices" class="service-list">
+                    <!-- Service items will be injected here -->
+                </ul>
+            </aside>
+        </div>
+        <footer class="footer">
+            <span id="footerFileStatus">Unnamed File</span>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div id="modalOverlay" class="modal-overlay hidden">
+        <div class="modal glass-panel">
+            <h3 id="modalTitle">Notice</h3>
+            <p id="modalMessage"></p>
+            <div class="modal-buttons" id="modalButtons">
+                <button id="modalBtnYes" class="btn primary">Yes</button>
+                <button id="modalBtnNo" class="btn danger">No</button>
+                <button id="modalBtnCancel" class="btn outline">Cancel</button>
+                <button id="modalBtnOk" class="btn primary hidden">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
