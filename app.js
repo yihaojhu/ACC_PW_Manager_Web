@@ -403,9 +403,14 @@ class App {
             // Fallback for mobile/Safari
             const input = document.createElement('input');
             input.type = 'file';
-            input.accept = '.ppb,.json';
+            input.style.display = 'none';
+            document.body.appendChild(input);
+            
+            // Remove accept attribute so mobile doesn't grey out unknown .ppb extensions
             input.onchange = e => {
                 const file = e.target.files[0];
+                document.body.removeChild(input);
+                
                 if (!file) return;
                 const reader = new FileReader();
                 reader.onload = async (event) => {
@@ -417,10 +422,19 @@ class App {
                         this.clearFields();
                     } catch (err) {
                         console.error('Failed to parse database file', err);
+                        await this.showModal('Error', 'Failed to load file. It may be corrupted or not a valid database.', ['ok']);
                     }
                 };
                 reader.readAsText(file);
             };
+            
+            // Cleanup if user cancels file dialog (some browsers)
+            window.addEventListener('focus', () => {
+                setTimeout(() => {
+                    if (input.parentNode) document.body.removeChild(input);
+                }, 1000);
+            }, { once: true });
+
             input.click();
         }
     }
@@ -482,7 +496,8 @@ class App {
         } else {
             // Fallback for mobile/Safari
             const jsonStr = JSON.stringify(this.services, null, 2);
-            const blob = new Blob([jsonStr], { type: 'application/json' });
+            // Use octet-stream so mobile OS doesn't forcefully append .txt or .json to our .ppb extension
+            const blob = new Blob([jsonStr], { type: 'application/octet-stream' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
