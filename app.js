@@ -375,28 +375,53 @@ class App {
     async openFile() {
         if (!(await this.okToContinue())) return;
 
-        try {
-            const [fileHandle] = await window.showOpenFilePicker({
-                types: [{
-                    description: 'Password Database',
-                    accept: { 'application/json': ['.ppb', '.json'] }
-                }]
-            });
-            const file = await fileHandle.getFile();
-            const contents = await file.text();
+        if (window.showOpenFilePicker) {
+            try {
+                const [fileHandle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'Password Database',
+                        accept: { 'application/json': ['.ppb', '.json'] }
+                    }]
+                });
+                const file = await fileHandle.getFile();
+                const contents = await file.text();
 
-            this.services = JSON.parse(contents);
-            this.fileHandle = fileHandle;
-            this.dirty = false;
-            
-            await this.recentDB.saveHandle(fileHandle);
-            await this.loadRecentFiles();
+                this.services = JSON.parse(contents);
+                this.fileHandle = fileHandle;
+                this.dirty = false;
+                
+                await this.recentDB.saveHandle(fileHandle);
+                await this.loadRecentFiles();
 
-            this.updateGUI(this.langManager.get('loadFile'));
-            this.clearFields();
-        } catch (e) {
-            console.error(e);
-            // User cancelled or error
+                this.updateGUI(this.langManager.get('loadFile'));
+                this.clearFields();
+            } catch (e) {
+                console.error(e);
+                // User cancelled or error
+            }
+        } else {
+            // Fallback for mobile/Safari
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.ppb,.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        this.services = JSON.parse(event.target.result);
+                        this.fileHandle = { name: file.name, isFallback: true };
+                        this.dirty = false;
+                        this.updateGUI(this.langManager.get('loadFile'));
+                        this.clearFields();
+                    } catch (err) {
+                        console.error('Failed to parse database file', err);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
         }
     }
 
@@ -410,7 +435,7 @@ class App {
             return;
         }
 
-        if (!this.fileHandle) {
+        if (!this.fileHandle || this.fileHandle.isFallback) {
             await this.saveasFile();
         } else {
             try {
@@ -436,22 +461,42 @@ class App {
             return;
         }
 
-        try {
-            const fileHandle = await window.showSaveFilePicker({
-                types: [{
-                    description: 'Password Database',
-                    accept: { 'application/json': ['.ppb'] }
-                }],
-                suggestedName: 'passwords.ppb'
-            });
+        if (window.showSaveFilePicker) {
+            try {
+                const fileHandle = await window.showSaveFilePicker({
+                    types: [{
+                        description: 'Password Database',
+                        accept: { 'application/json': ['.ppb'] }
+                    }],
+                    suggestedName: 'passwords.ppb'
+                });
 
-            this.fileHandle = fileHandle;
-            await this.saveFile();
+                this.fileHandle = fileHandle;
+                await this.saveFile();
+                
+                await this.recentDB.saveHandle(fileHandle);
+                await this.loadRecentFiles();
+            } catch (e) {
+                console.error(e);
+            }
+        } else {
+            // Fallback for mobile/Safari
+            const jsonStr = JSON.stringify(this.services, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (this.fileHandle && this.fileHandle.name) ? this.fileHandle.name : 'passwords.ppb';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
             
-            await this.recentDB.saveHandle(fileHandle);
-            await this.loadRecentFiles();
-        } catch (e) {
-            console.error(e);
+            if (!this.fileHandle) {
+                this.fileHandle = { name: 'passwords.ppb', isFallback: true };
+            }
+            this.dirty = false;
+            this.updateGUI(this.langManager.get('saveFile'));
         }
     }
 
