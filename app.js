@@ -45,6 +45,17 @@ class RecentDB {
             };
         });
     }
+
+    async removeHandle(name) {
+        const db = await this.init();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([this.storeName], 'readwrite');
+            const store = transaction.objectStore(this.storeName);
+            const request = store.delete(name);
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve();
+        });
+    }
 }
 
 class App {
@@ -136,6 +147,26 @@ class App {
         document.getElementById('actionChinese').addEventListener('click', () => {
             this.langManager.setLanguage('Chinese');
             this.updateLanguage();
+        });
+
+        // Close dropdowns on click
+        document.querySelectorAll('.dropdown button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const dropdown = this.closest('.dropdown');
+                if (dropdown) {
+                    dropdown.style.visibility = 'hidden';
+                    dropdown.style.opacity = '0';
+                    
+                    // Re-enable hover behavior once mouse leaves the menu item
+                    const menuItem = dropdown.closest('.menu-item');
+                    if (menuItem) {
+                        menuItem.addEventListener('mouseleave', () => {
+                            dropdown.style.visibility = '';
+                            dropdown.style.opacity = '';
+                        }, { once: true });
+                    }
+                }
+            });
         });
     }
 
@@ -369,7 +400,7 @@ class App {
         this.fileHandle = null;
         this.dirty = false;
         this.updateGUI(this.langManager.get('newFile'));
-        this.clearFields();
+        this.updateButtons();
     }
 
     async openFile() {
@@ -380,7 +411,7 @@ class App {
                 const [fileHandle] = await window.showOpenFilePicker({
                     types: [{
                         description: 'Password Database',
-                        accept: { 'application/json': ['.ppb', '.json'] }
+                        accept: { 'application/json': ['.json'] }
                     }]
                 });
                 const file = await fileHandle.getFile();
@@ -394,7 +425,7 @@ class App {
                 await this.loadRecentFiles();
 
                 this.updateGUI(this.langManager.get('loadFile'));
-                this.clearFields();
+                this.updateButtons();
             } catch (e) {
                 console.error(e);
                 // User cancelled or error
@@ -403,10 +434,9 @@ class App {
             // Fallback for mobile/Safari
             const input = document.createElement('input');
             input.type = 'file';
+            input.accept = '.json';
             input.style.display = 'none';
             document.body.appendChild(input);
-            
-            // Remove accept attribute so mobile doesn't grey out unknown .ppb extensions
             input.onchange = e => {
                 const file = e.target.files[0];
                 document.body.removeChild(input);
@@ -419,7 +449,7 @@ class App {
                         this.fileHandle = { name: file.name, isFallback: true };
                         this.dirty = false;
                         this.updateGUI(this.langManager.get('loadFile'));
-                        this.clearFields();
+                        this.updateButtons();
                     } catch (err) {
                         console.error('Failed to parse database file', err);
                         await this.showModal('Error', 'Failed to load file. It may be corrupted or not a valid database.', ['ok']);
@@ -480,9 +510,9 @@ class App {
                 const fileHandle = await window.showSaveFilePicker({
                     types: [{
                         description: 'Password Database',
-                        accept: { 'application/json': ['.ppb'] }
+                        accept: { 'application/json': ['.json'] }
                     }],
-                    suggestedName: 'passwords.ppb'
+                    suggestedName: 'passwords.json'
                 });
 
                 this.fileHandle = fileHandle;
@@ -496,19 +526,18 @@ class App {
         } else {
             // Fallback for mobile/Safari
             const jsonStr = JSON.stringify(this.services, null, 2);
-            // Use octet-stream so mobile OS doesn't forcefully append .txt or .json to our .ppb extension
-            const blob = new Blob([jsonStr], { type: 'application/octet-stream' });
+            const blob = new Blob([jsonStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = (this.fileHandle && this.fileHandle.name) ? this.fileHandle.name : 'passwords.ppb';
+            a.download = (this.fileHandle && this.fileHandle.name) ? this.fileHandle.name : 'passwords.json';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
             if (!this.fileHandle) {
-                this.fileHandle = { name: 'passwords.ppb', isFallback: true };
+                this.fileHandle = { name: 'passwords.json', isFallback: true };
             }
             this.dirty = false;
             this.updateGUI(this.langManager.get('saveFile'));
@@ -566,10 +595,16 @@ class App {
             await this.loadRecentFiles();
 
             this.updateGUI(this.langManager.get('loadFile'));
-            this.clearFields();
+            this.updateButtons();
         } catch (e) {
             console.error(e);
-            await this.showModal('Error', 'Could not open the recent file. It may have been moved or deleted.', ['ok']);
+            if (e.name === 'NotFoundError' || e.message.includes('could not be found')) {
+                await this.recentDB.removeHandle(handle.name);
+                await this.loadRecentFiles();
+                await this.showModal('Error', 'The file could not be found (it may have been moved or deleted). It has been removed from the recent files list.', ['ok']);
+            } else if (e.message !== 'Permission denied') {
+                await this.showModal('Error', 'Could not open the recent file.', ['ok']);
+            }
         }
     }
 }
