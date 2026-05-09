@@ -151,12 +151,12 @@ class App {
 
         // Close dropdowns on click
         document.querySelectorAll('.dropdown button').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 const dropdown = this.closest('.dropdown');
                 if (dropdown) {
                     dropdown.style.visibility = 'hidden';
                     dropdown.style.opacity = '0';
-                    
+
                     // Re-enable hover behavior once mouse leaves the menu item
                     const menuItem = dropdown.closest('.menu-item');
                     if (menuItem) {
@@ -317,7 +317,7 @@ class App {
         if (this.services[s]) {
             const res = await this.showModal(
                 this.langManager.get('messageTitle'),
-                this.langManager.get('addExistFile'),
+                this.langManager.get('addExistFile', s),
                 ['yes', 'cancel']
             );
             if (res === 'cancel') return;
@@ -420,7 +420,7 @@ class App {
                 this.services = JSON.parse(contents);
                 this.fileHandle = fileHandle;
                 this.dirty = false;
-                
+
                 await this.recentDB.saveHandle(fileHandle);
                 await this.loadRecentFiles();
 
@@ -440,7 +440,7 @@ class App {
             input.onchange = e => {
                 const file = e.target.files[0];
                 document.body.removeChild(input);
-                
+
                 if (!file) return;
                 const reader = new FileReader();
                 reader.onload = async (event) => {
@@ -457,7 +457,7 @@ class App {
                 };
                 reader.readAsText(file);
             };
-            
+
             // Cleanup if user cancels file dialog (some browsers)
             window.addEventListener('focus', () => {
                 setTimeout(() => {
@@ -517,7 +517,7 @@ class App {
 
                 this.fileHandle = fileHandle;
                 await this.saveFile();
-                
+
                 await this.recentDB.saveHandle(fileHandle);
                 await this.loadRecentFiles();
             } catch (e) {
@@ -535,7 +535,7 @@ class App {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            
+
             if (!this.fileHandle) {
                 this.fileHandle = { name: 'passwords.json', isFallback: true };
             }
@@ -547,7 +547,7 @@ class App {
     async showAbout() {
         await this.showModal(
             this.langManager.get('titleAbout'),
-            "Version: 1.0 \nAuthor: 朱奕豪(Yi-Hao, Jhu) \nContact: g9722525@gmail.com",
+            "Version: 2.0 \nAuthor: 朱奕豪(Yi-Hao, Jhu) \nContact: g9722525@gmail.com",
             ['ok']
         );
     }
@@ -555,7 +555,7 @@ class App {
     async loadRecentFiles() {
         const recentFiles = await this.recentDB.getRecentFiles();
         this.recentFilesList.innerHTML = '';
-        
+
         if (recentFiles.length === 0) {
             this.recentFilesContainer.classList.add('hidden');
             return;
@@ -586,11 +586,11 @@ class App {
 
             const file = await handle.getFile();
             const contents = await file.text();
-            
+
             this.services = JSON.parse(contents);
             this.fileHandle = handle;
             this.dirty = false;
-            
+
             await this.recentDB.saveHandle(handle);
             await this.loadRecentFiles();
 

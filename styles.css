@@ -187,10 +187,16 @@ body::after {
     justify-content: center;
 }
 
-.toolbar-btn img {
-    width: 24px;
-    height: 24px;
+.toolbar-btn .toolbar-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--text-main);
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    transition: color 0.2s;
+}
+
+.toolbar-btn:hover .toolbar-icon {
+    color: #fff;
 }
 
 .toolbar-btn:hover {
