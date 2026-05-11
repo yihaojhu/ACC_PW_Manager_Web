@@ -348,12 +348,30 @@ body::after {
     flex-direction: column;
 }
 
-.sidebar h2 {
-    font-size: 1.2rem;
-    font-weight: 500;
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 15px;
     border-bottom: 1px solid var(--panel-border);
     padding-bottom: 10px;
+}
+
+.sidebar h2 {
+    font-size: 1.2rem;
+    font-weight: 500;
+    margin-bottom: 0;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.btn-icon {
+    padding: 6px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .service-list {
